@@ -1,0 +1,9 @@
+.local/
+.cache/
+build*/
+bin/
+out/
+
+
+# Recommended that user's inputs are not uploaded publically
+inputs
