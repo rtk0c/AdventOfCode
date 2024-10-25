@@ -8,8 +8,9 @@ import Data.Text.Read qualified as T
 decimal :: T.Text -> Int
 decimal = fst . either error id . T.decimal
 
-map2 :: (a -> x) -> (b -> y) -> (a, b) -> (x, y)
-map2 f g (a, b) = (f a, g b)
+map2 f g (x, y) = (f x, g y)
+
+map3 f g h (x, y, z) = (f x, g y, h z)
 
 parseElm str = case T.split (== ' ') str of
   n : "red" : _ -> (decimal n, 0, 0)
@@ -51,14 +52,29 @@ legalSample (r, g, b) = r <= 12 && g <= 13 && b <= 14
 
 legalGame = all legalSample
 
+part1 :: [(Int, [Sample])] -> Int
 part1 = sum . map fst . filter (legalGame . snd)
 
-part2 input = 0
+transpose :: [(a, a, a)] -> ([a], [a], [a])
+transpose ((r, g, b) : xs) = (r : rs, g : gs, b : bs)
+  where
+    (rs, gs, bs) = transpose xs
+transpose [] = ([], [], [])
+
+power :: (Int, Int, Int) -> Int
+power (r, g, b) = r * g * b
+
+minCubes :: [Sample] -> (Int, Int, Int)
+minCubes game =
+  let (reds, greens, blues) = transpose game
+   in (maximum reds, maximum greens, maximum blues)
+
+part2 :: [[Sample]] -> Int
+part2 = sum . map (power . minCubes)
 
 mainWithFile f = do
   input <- fmap parseInput (T.readFile f)
-  print input
   putStrLn $ "Part 1: " ++ show (part1 input)
-  putStrLn $ "Part 2: " ++ show (part2 input)
+  putStrLn $ "Part 2: " ++ show (part2 (map snd input))
 
 main = mainWithFile "inputs/day02.txt"
