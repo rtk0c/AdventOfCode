@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import AoC qualified
 import Data.Char (isDigit)
 import Data.Text qualified as T
-import Data.Text.IO qualified as T
 import Data.Text.Read qualified as T
 
 decimal :: T.Text -> Int
@@ -72,9 +72,7 @@ minCubes game =
 part2 :: [[Sample]] -> Int
 part2 = sum . map (power . minCubes)
 
-mainWithFile f = do
-  input <- fmap parseInput (T.readFile f)
-  putStrLn $ "Part 1: " ++ show (part1 input)
-  putStrLn $ "Part 2: " ++ show (part2 (map snd input))
-
-main = mainWithFile "inputs/day02.txt"
+main = AoC.solveWithInput p1 p2
+  where
+    p1 = part1 . parseInput
+    p2 = part2 . map snd . parseInput
