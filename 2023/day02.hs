@@ -39,11 +39,11 @@ mapInd f = zipWith (\i a -> (i, f a)) [1 ..]
 parseInput :: T.Text -> [(Int, [Sample])]
 parseInput = mapInd parseLine . map T.strip . map (dropBefore ":") . T.lines
 
-illegalSample (r, g, b) = r > 12 || g > 13 || b > 14
+legalSample (r, g, b) = r <= 12 && g <= 13 && b <= 14
 
-illegalGame = any illegalSample
+legalGame = all legalSample
 
-part1 = sum . map fst . filter (illegalGame . snd)
+part1 = sum . map fst . filter (legalGame . snd)
 
 part2 input = 0
 
