@@ -2,7 +2,23 @@ module AoC where
 
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
+import Data.Text.Read qualified as T
 import System.Environment (getArgs)
+
+-- Same as Data.Text.breakOn on a char, but removes the separator char
+cutOn :: Char -> T.Text -> (T.Text, T.Text)
+cutOn c s =
+  let (front, back) = T.breakOn (T.singleton c) s
+   in (front, T.tail back)
+
+decimal :: T.Text -> Int
+decimal = fst . either error id . T.decimal
+
+map2 f g (x, y) = (f x, g y)
+map2a f (x, y) = (f x, f y)
+
+map3 f g h (x, y, z) = (f x, g y, h z)
+map3a f (x, y, z) = (f x, f y, f z)
 
 runWithInput :: (T.Text -> IO b) -> IO b
 runWithInput solution = do

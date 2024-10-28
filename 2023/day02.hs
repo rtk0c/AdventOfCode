@@ -1,16 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import AoC qualified
+import AoC (cutOn, decimal, solveWithInput)
 import Data.Char (isDigit)
 import Data.Text qualified as T
 import Data.Text.Read qualified as T
-
-decimal :: T.Text -> Int
-decimal = fst . either error id . T.decimal
-
-map2 f g (x, y) = (f x, g y)
-
-map3 f g h (x, y, z) = (f x, g y, h z)
 
 parseElm str = case T.split (== ' ') str of
   n : "red" : _ -> (decimal n, 0, 0)
@@ -34,12 +27,6 @@ parseSamples = map (parseSample . T.strip) . T.split (== ';')
 -- Turn "Game NNN" into Int NNN
 parseIndex :: T.Text -> Int
 parseIndex = decimal . T.filter isDigit
-
--- Same as Data.Text.breakOn on a char, but removes the separator char
-cutOn :: Char -> T.Text -> (T.Text, T.Text)
-cutOn c s =
-  let (front, back) = T.breakOn (T.singleton c) s
-   in (front, T.tail back)
 
 parseInput :: T.Text -> [(Int, [Sample])]
 parseInput = map lf . T.lines
@@ -72,7 +59,7 @@ minCubes game =
 part2 :: [[Sample]] -> Int
 part2 = sum . map (power . minCubes)
 
-main = AoC.solveWithInput p1 p2
+main = solveWithInput p1 p2
   where
     p1 = part1 . parseInput
     p2 = part2 . map snd . parseInput
