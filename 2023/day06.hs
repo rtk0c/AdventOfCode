@@ -2,6 +2,7 @@ import AoC (cutOn, decimal, solveWithInput)
 import Data.Bifunctor (bimap)
 import Data.List (transpose)
 import Data.Text qualified as T
+import Data.Char (isDigit)
 
 -- Let t be the total time allowed in race (constant)
 -- Let tc be the time used to charge the race (parameter)
@@ -34,23 +35,37 @@ nextInt x = floor x + 1
 
 prevInt x = ceiling x - 1
 
-numSolutions timeLimit record = prevInt t2 - nextInt t1 + 1
+solveChargeTimes :: Double -> Double -> Int
+solveChargeTimes timeLimit record = prevInt t2 - nextInt t1 + 1
   where
     (t1, t2) = solveQuadratic (-1) timeLimit (-record)
+
+-- Just solveChargeTimes but pass the parameters differently
+solveTupII :: (Int, Int) -> Int
+solveTupII = uncurry solveChargeTimes . bimap fromIntegral fromIntegral
 
 stripTo :: Char -> T.Text -> T.Text
 stripTo c = snd . cutOn c
 
-parseInput :: T.Text -> [(Int, Int)]
-parseInput s = zip timeLimits records
+parsePart1 :: T.Text -> [(Int, Int)]
+parsePart1 s = zip timeLimits records
   where
     parseLine = map decimal . T.words . stripTo ':'
     [timeLimits, records] = map parseLine . T.lines $ s
 
 part1 :: [(Int, Int)] -> Int
-part1 = product . map (uncurry numSolutions . bimap fromIntegral fromIntegral)
+part1 = product . map solveTupII
+
+parsePart2 :: T.Text -> (Int, Int)
+parsePart2 s = (timeLimit, record)
+  where
+    parseLine = decimal . T.filter isDigit . stripTo ':'
+    [timeLimit, record] = map parseLine . T.lines $ s
+
+part2 :: (Int, Int) -> Int
+part2 = solveTupII
 
 main = solveWithInput p1 p2
   where
-    p1 = part1 . parseInput
-    p2 = const 0
+    p1 = part1 . parsePart1
+    p2 = part2 . parsePart2
