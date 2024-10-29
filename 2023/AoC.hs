@@ -14,6 +14,14 @@ cutOn c s =
 decimal :: T.Text -> Int
 decimal = fst . either error id . T.decimal
 
+intersectSorted :: (Ord a) => [a] -> [a] -> [a]
+intersectSorted _ [] = []
+intersectSorted [] _ = []
+intersectSorted xs@(x : xrest) ys@(y : yrest)
+  | x > y = intersectSorted xs yrest
+  | x < y = intersectSorted xrest ys
+  | otherwise = x : intersectSorted xrest yrest
+
 map2 f g (x, y) = (f x, g y)
 map2a f (x, y) = (f x, f y)
 
