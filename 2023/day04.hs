@@ -42,7 +42,18 @@ score n
 part1 :: [Pile] -> Int
 part1 piles = sum $ map (score . winningCount . sortPile) piles
 
+solve :: [(Int, Pile)] -> [(Int, Pile)]
+solve [] = []
+solve (curr@(count, p) : ps) = curr : solve rest
+  where
+    rewards = (winningCount . sortPile) p
+    addCount (count, p) x = (count + x, p)
+    rest = zipWith addCount ps (replicate rewards count ++ repeat 0)
+
+-- part2 :: [Pile] -> Int
+part2 = sum . map fst . solve . map (1,)
+
 main = solveWithInput p1 p2
   where
     p1 = part1 . parseInput
-    p2 = const 0
+    p2 = part2 . parseInput
