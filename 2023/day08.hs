@@ -16,32 +16,39 @@ parseLine s = (f key, (f left, f right))
 
 type DesertMap = Map Vertex (Vertex, Vertex)
 
-type Direction = [Char]
+-- L or R
+type Step = Char
 
-parseInput :: T.Text -> (DesertMap, Direction)
+-- the ex. LLRRRLRRL string provided in input
+type Directions = [Step]
+
+parseInput :: T.Text -> (DesertMap, Directions)
 parseInput s = (desertMap, direction)
   where
     s1 : s2 = T.lines s
     desertMap = fromList . map parseLine . filter (not . T.null) $ s2
     direction = T.unpack . T.strip $ s1
 
-findPath :: DesertMap -> Direction -> Int
-findPath m p0 = walk "AAA" p0
+followDirections :: DesertMap -> Directions -> [Vertex]
+followDirections m p0 = scanl nextVert "AAA" (cycle p0)
   where
     -- lookup, but assumes the key exists (i.e. assumes our input is valid)
     lookup' v = case Data.Map.lookup v m of
       Just k -> k
       Nothing -> error (T.unpack v)
-    walk :: Vertex -> Direction -> Int
-    walk v [] = walk v p0
-    walk s (edge : ps)
-      | s == "ZZZ" = 0
-      | otherwise =
-          case edge of
-            'L' -> 1 + walk (fst $ lookup' s) ps
-            'R' -> 1 + walk (snd $ lookup' s) ps
+    nextVert :: Vertex -> Step -> Vertex
+    nextVert v edge =
+      case edge of
+        'L' -> fst $ lookup' v
+        'R' -> snd $ lookup' v
+
+part1 :: (DesertMap, Directions) -> Int
+part1 (desertMap, directions) = length path
+  where
+    -- List of every vertex we travel through, until we get to ZZZ
+    path = takeWhile (/= "ZZZ") (followDirections desertMap directions)
 
 main = solveWithInput p1 p2
   where
-    p1 = uncurry findPath . parseInput
+    p1 = part1 . parseInput
     p2 = const 9
