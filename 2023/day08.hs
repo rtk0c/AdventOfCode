@@ -2,7 +2,7 @@
 
 import AoC
 import Data.Char (isAlpha, isDigit)
-import Data.Map (Map, fromAscList, lookup)
+import Data.Map (Map, fromList, lookup)
 import Data.Text qualified as T
 
 parseLine :: T.Text -> (T.Text, (T.Text, T.Text))
@@ -17,7 +17,7 @@ type DesertMap = Map T.Text (T.Text, T.Text)
 type Path = [Char]
 
 parseMap :: [T.Text] -> DesertMap
-parseMap = fromAscList . map parseLine
+parseMap = fromList . map parseLine
 
 textToStr :: T.Text -> String
 textToStr = reverse . T.foldl (flip (:)) []
