@@ -3,7 +3,7 @@
 import AoC
 import Data.Char (isAlpha, isDigit)
 import Data.List (transpose)
-import Data.Map (Map, filterWithKey, fromList, keys, lookup)
+import Data.Map (Map, filterWithKey, fromList, keys, lookup, (!))
 import Data.Text qualified as T
 
 type Vertex = T.Text
@@ -34,22 +34,13 @@ parseInput s = (desertMap, direction)
 trace :: DesertMap -> Directions -> Vertex -> [Vertex]
 trace m p0 start = scanl nextVert start (cycle p0)
   where
-    -- lookup, but assumes the key exists (i.e. assumes our input is valid)
-    lookup' v = case Data.Map.lookup v m of
-      Just k -> k
-      Nothing -> error (T.unpack v)
-    nextVert :: Vertex -> Step -> Vertex
-    nextVert v edge =
-      case edge of
-        'L' -> fst $ lookup' v
-        'R' -> snd $ lookup' v
+    nextVert v 'L' = fst $ m ! v
+    nextVert v 'R' = snd $ m ! v
 
 part1 :: (DesertMap, Directions) -> Int
-part1 (desertMap, directions) = length path
+part1 (desertMap, directions) = length . takeWhile (/= "ZZZ") . trace' $ "AAA"
   where
     trace' = trace desertMap directions
-    -- trace until the goal ZZZ
-    path = takeWhile (/= "ZZZ") . trace' $ "AAA"
 
 endsWithA = T.isSuffixOf "A"
 
@@ -57,12 +48,10 @@ endsWithZ = T.isSuffixOf "Z"
 
 -- N.B. the AoC problem words this as "a ghost follows all paths starting at ??A", reword to talk about multiple ghosts just names varaible names eaiser
 part2 :: (DesertMap, Directions) -> Int
-part2 (desertMap, directions) = length paths
+part2 (desertMap, directions) = foldl lcm 1 . map (length . takeWhile (not . endsWithZ) . trace') $ ghosts
   where
     trace' = trace desertMap directions
     ghosts = [v | v <- keys desertMap, endsWithA v]
-    -- traces until all ghosts hit the goal ??Z
-    paths = takeWhile (not . all endsWithZ) . transpose . map trace' $ ghosts
 
 main = solveWithInput p1 p2
   where
