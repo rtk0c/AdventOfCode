@@ -2,44 +2,44 @@
 
 import AoC
 import Data.Char (isAlpha, isDigit)
-import Data.Map (Map, fromList, lookup)
+import Data.Map (Map, filterWithKey, fromList, keys, lookup)
 import Data.Text qualified as T
 
-parseLine :: T.Text -> (T.Text, (T.Text, T.Text))
+type Vertex = T.Text
+
+parseLine :: T.Text -> (Vertex, (Vertex, Vertex))
 parseLine s = (f key, (f left, f right))
   where
     (key, s') = cutOn '=' s
     (left, right) = cutOn ',' s'
     f = T.filter isAlpha
 
-type DesertMap = Map T.Text (T.Text, T.Text)
+type DesertMap = Map Vertex (Vertex, Vertex)
 
-type Path = [Char]
+type Direction = [Char]
 
-parseMap :: [T.Text] -> DesertMap
-parseMap = fromList . map parseLine
-
-parseInput :: T.Text -> (DesertMap, Path)
-parseInput s = (dm, path)
+parseInput :: T.Text -> (DesertMap, Direction)
+parseInput s = (desertMap, direction)
   where
     s1 : s2 = T.lines s
-    dm = parseMap $ filter (not . T.null) s2
-    path = T.unpack $ T.strip s1
+    desertMap = fromList . map parseLine . filter (not . T.null) $ s2
+    direction = T.unpack . T.strip $ s1
 
-findPath :: DesertMap -> Path -> Int
+findPath :: DesertMap -> Direction -> Int
 findPath m p0 = walk "AAA" p0
   where
-    lk v = case Data.Map.lookup v m of
+    -- lookup, but assumes the key exists (i.e. assumes our input is valid)
+    lookup' v = case Data.Map.lookup v m of
       Just k -> k
       Nothing -> error (T.unpack v)
-    walk :: T.Text -> Path -> Int
+    walk :: Vertex -> Direction -> Int
     walk v [] = walk v p0
     walk s (edge : ps)
       | s == "ZZZ" = 0
       | otherwise =
           case edge of
-            'L' -> 1 + walk (fst $ lk s) ps
-            'R' -> 1 + walk (snd $ lk s) ps
+            'L' -> 1 + walk (fst $ lookup' s) ps
+            'R' -> 1 + walk (snd $ lookup' s) ps
 
 main = solveWithInput p1 p2
   where
