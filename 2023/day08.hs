@@ -19,33 +19,29 @@ type Path = [Char]
 parseMap :: [T.Text] -> DesertMap
 parseMap = fromList . map parseLine
 
-textToStr :: T.Text -> String
-textToStr = reverse . T.foldl (flip (:)) []
-
 parseInput :: T.Text -> (DesertMap, Path)
 parseInput s = (dm, path)
   where
     s1 : s2 = T.lines s
     dm = parseMap $ filter (not . T.null) s2
-    path = textToStr $ T.strip s1
+    path = T.unpack $ T.strip s1
 
--- part1 :: DesertMap -> Path -> Int
-part1 m p0 = walkPath "AAA" p0
+findPath :: DesertMap -> Path -> Int
+findPath m p0 = walk "AAA" p0
   where
     lk v = case Data.Map.lookup v m of
       Just k -> k
-      Nothing -> error (textToStr v)
-    start = lk "AAA"
-    -- walkPath :: T.Text -> Path -> Int
-    walkPath s [] = walkPath s p0
-    walkPath s (edge : ps)
-      | s == "ZZZ" = [s]
+      Nothing -> error (T.unpack v)
+    walk :: T.Text -> Path -> Int
+    walk v [] = walk v p0
+    walk s (edge : ps)
+      | s == "ZZZ" = 0
       | otherwise =
           case edge of
-            'L' -> s : walkPath (fst $ lk s) ps
-            'R' -> s : walkPath (snd $ lk s) ps
+            'L' -> 1 + walk (fst $ lk s) ps
+            'R' -> 1 + walk (snd $ lk s) ps
 
 main = solveWithInput p1 p2
   where
-    p1 = uncurry part1 . parseInput
+    p1 = uncurry findPath . parseInput
     p2 = const 9
