@@ -12,7 +12,7 @@ cutOn c s =
    in (front, T.tail back)
 
 decimal :: T.Text -> Int
-decimal = fst . either error id . T.decimal
+decimal = fst . either error id . T.signed T.decimal
 
 intersectSorted :: (Ord a) => [a] -> [a] -> [a]
 intersectSorted _ [] = []
