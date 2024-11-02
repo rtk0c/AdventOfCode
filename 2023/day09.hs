@@ -15,13 +15,17 @@ delta lst = zipWith (-) (tail lst) lst
 duc :: [Int] -> [[Int]]
 duc = takeWhile (not . all (== 0)) . iterate delta
 
-extrapolate :: [Int] -> Int
-extrapolate inp = foldr ((+) . last) 0 $ duc inp
-
 part1 :: [[Int]] -> Int
 part1 = sum . map extrapolate
+  where
+    extrapolate = foldr ((+) . last) 0 . duc
+
+part2 :: [[Int]] -> Int
+part2 = sum . map extrapolate
+  where
+    extrapolate = foldr ((-) . head) 0 . duc
 
 main = solveWithInput p1 p2
   where
     p1 = part1 . parseInput
-    p2 = const 0
+    p2 = part2 . parseInput
