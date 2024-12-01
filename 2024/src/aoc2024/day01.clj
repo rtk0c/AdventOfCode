@@ -20,6 +20,18 @@
     (reduce +
             (map #(abs (- %1 %2)) llist rlist))))
 
+(defn- count-occurences [lst]
+  (persistent!
+   (reduce (fn [tbl e]
+             (assoc! tbl e (+ 1 (get tbl e 0))))
+           (transient {})
+           lst)))
+
+(defn part2 [[llist rlist]]
+  (let [rtbl (count-occurences rlist)]
+    (reduce + (map #(* % (get rtbl % 0)) llist))))
+
 (defn solve []
   (let [input (parse-input)]
-    (part1 input)))
+    (part1 input)
+    (part2 input)))
