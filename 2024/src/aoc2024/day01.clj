@@ -14,7 +14,11 @@
           (conj! right-list (Integer/parseInt right)))))
     [(persistent! left-list) (persistent! right-list)]))
 
-(defn part1 [[llist rlist]])
+(defn part1 [[llist rlist]]
+  (let [llist (sort llist)
+        rlist (sort rlist)]
+    (reduce +
+            (map #(abs (- %1 %2)) llist rlist))))
 
 (defn solve []
   (let [input (parse-input)]
