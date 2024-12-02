@@ -33,5 +33,5 @@
 
 (defn solve []
   (let [input (parse-input)]
-    (part1 input)
-    (part2 input)))
+    [(part1 input)
+     (part2 input)]))

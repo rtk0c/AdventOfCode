@@ -21,6 +21,20 @@
 (defn part1 [input]
   (count (filter report-safe? input)))
 
+(defn- drop-nth [n coll]
+  (keep-indexed (fn [i v] (if (= i n) nil v)) coll))
+
+(defn- report-dampened-safe? [report]
+  (some report-safe?
+        (for [i (range (count report))]
+          (drop-nth i report))))
+
+(defn part2 [input]
+  (->> input
+       (filter report-dampened-safe?)
+       (count)))
+
 (defn solve []
   (let [input (parse-input)]
-    (part1 input)))
+    [(part1 input)
+     (part2 input)]))
