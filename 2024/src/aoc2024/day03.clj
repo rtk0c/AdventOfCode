@@ -113,7 +113,19 @@
           (recur offset (conj! commands res))
           (recur offset commands))))))
 
-(defn part2 [input])
+(defn part2 [input]
+  (loop [acc 0
+         commands input
+         enabled true]
+    (if (empty? commands)
+      acc
+      (case (first commands)
+        :do (recur acc (rest commands) true)
+        :donot (recur acc (rest commands) false)
+        (if enabled
+          (let [[_ x y] (first commands)]
+            (recur (+ acc (* x y)) (rest commands) enabled))
+          (recur acc (rest commands) enabled))))))
 
 (defn solve []
   (let [file-content (slurp "inputs/day03.txt")]
