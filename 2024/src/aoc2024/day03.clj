@@ -29,9 +29,8 @@
     (loop [i 0]
       (if (= i (count word))
         [true (+ offset i) word]
-        (if (and (< (+ offset i) (count s))
-                 (= (nth s (+ offset i))
-                    (nth word i)))
+        (if (= (nth s (+ offset i))
+               (nth word i))
           (recur (+ i 1))
           ;; HERE BE DRAGONS: We can skip ahead everything up to the mismatched
           ;; character, because our words of interest "mul" "do" "don't" all
@@ -46,7 +45,7 @@
 
 (defn- pc-int [offset s]
   (loop [i offset]
-    (if (and (< i (count s))
+    (if (and (< i (count s)) ;; needs bounds check, `Character/isDigit` doesn't take nil
             (Character/isDigit (nth s i)))
       (recur (+ i 1))
       (if (= i offset)
