@@ -29,8 +29,9 @@
     (loop [i 0]
       (if (= i (count word))
         [true (+ offset i) word]
-        (if (= (nth s (+ offset i))
-               (nth word i))
+        (if (and (< (+ offset i) (count s))
+                 (= (nth s (+ offset i))
+                    (nth word i)))
           (recur (+ i 1))
           ;; HERE BE DRAGONS: We can skip ahead everything up to the mismatched
           ;; character, because our words of interest "mul" "do" "don't" all
@@ -66,40 +67,51 @@
 ;; Ideally we would have Monadic `>>=` and `pure`, or heck even do-notation, but
 ;; it's too much work for just a single day of AoC.
 
-(defn- pc-success? [[success _ _]] success)
-(defn- pc-result [[_ _ res]] res)
-
-(defmacro pc-do*
-  ([offset s pcs then]
-   (if (seq pcs)
-     `(let [[suc? offset ~(first pcs)] (~(second pcs) offset s)]
-        (if suc?
-          (pc-do* offset s ~(drop 2 pcs) ~then)
-          [false offset nil]))
-     then)))
-
+;; This is kind of hilarious
 (defn- pc-mul [offset s]
-  (let [[suc1? offset _] ((pc-word "mul(") offset s)
-        [suc2? offset x] (pc-int offset s)
-        [suc3? offset _] ((pc-word ",") offset s)
-        [suc4? offset y] (pc-int offset s)
-        [suc5? offset _] ((pc-word ")") offset s)]
-    (if (and suc1? suc2? suc3? suc4? suc5?)
-      [true offset [:mul x y]]
-      [false (+ offset 1) nil])))
+  (let [[suc? offset _] ((pc-word "mul(") offset s)]
+    (if (not suc?)
+      [false offset nil]
+      (let [[suc? offset x] (pc-int offset s)]
+        (if (not suc?)
+          [false offset nil]
+          (let [[suc? offset _] ((pc-word ",") offset s)]
+            (if (not suc?)
+              [false offset nil]
+              (let [[suc? offset y] (pc-int offset s)]
+                (if (not suc?)
+                  [false offset nil]
+                  (let [[suc? offset _] ((pc-word ")") offset s)]
+                    (if (not suc?)
+                      [false offset nil]
+                      [true offset [:mul x y]])))))))))))
 
-(defn- pc-mul [offset s]
-  (pc-do*
-   offset s
-   [_ (pc-word "mul(")
-    x pc-int
-    _ (pc-word ",")
-    y pc-int
-    _ (pc-word ")")]
-   [true offset [:mul x y]]))
+(defn- pc-do [offset s]
+  (let [[suc? offset val] ((pc-word "do()") offset s)]
+    (if suc?
+      [true offset :do]
+      [false offset nil])))
+
+(defn- pc-donot [offset s]
+  (let [[suc? offset val] ((pc-word "don't()") offset s)]
+    (if suc?
+      [true offset :donot]
+      [false offset nil])))
+
+(defn- pc-some-command [offset s]
+  ((pc-any pc-mul
+           pc-do
+           pc-donot) offset s))
 
 (defn parse-wohoo [file-content]
-  )
+  (loop [offset 0
+         commands (transient [])]
+    (if  (>= offset (count file-content))
+      (persistent! commands)
+      (let [[suc? offset res] (pc-some-command offset file-content)]
+        (if suc?
+          (recur offset (conj! commands res))
+          (recur offset commands))))))
 
 (defn part2 [input])
 
