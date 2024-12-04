@@ -1,5 +1,4 @@
-(ns aoc2024.day03
-  (:require [clojure.string :as str]))
+(ns aoc2024.day03)
 
 (defn parse-with-regex [file-content]
   ;; It seems like a mul(x,y) never spans across a line, so we don't have to
