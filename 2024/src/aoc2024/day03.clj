@@ -63,44 +63,51 @@
                (fn [[_ skipahead _]] skipahead)
                pc-res)))))
 
-;; Ideally we would have Monadic `>>=` and `pure`, or heck even do-notation, but
-;; it's too much work for just a single day of AoC.
+(defn- pc-expand-dos [forms offset-in-s src-in-s]
+  (let [form (first forms)
+        offset-s (gensym "offset")
+        invocation (list (if (vector? form) (second form) form)
+                         offset-in-s
+                         src-in-s)
+        val-s (if (vector? form) (first form) '_)]
+    (if (empty? (rest forms))
+      invocation
+      `(let [[suc?# ~offset-s ~val-s :as res#] ~invocation]
+         (if suc?#
+           ~(pc-expand-dos (rest forms) offset-s src-in-s)
+           res#)))))
 
-;; This is kind of hilarious
-(defn- pc-mul [offset s]
-  (let [[suc? offset _] ((pc-word "mul(") offset s)]
-    (if (not suc?)
-      [false offset nil]
-      (let [[suc? offset x] (pc-int offset s)]
-        (if (not suc?)
-          [false offset nil]
-          (let [[suc? offset _] ((pc-word ",") offset s)]
-            (if (not suc?)
-              [false offset nil]
-              (let [[suc? offset y] (pc-int offset s)]
-                (if (not suc?)
-                  [false offset nil]
-                  (let [[suc? offset _] ((pc-word ")") offset s)]
-                    (if (not suc?)
-                      [false offset nil]
-                      [true offset [:mul x y]])))))))))))
+(defmacro ^:private pc-do
+  [& forms] ;; no empty forms
+  (let [offset-s (gensym "offset")
+        src-s (gensym "src")]
+    `(fn [~offset-s ~src-s]
+       ~(pc-expand-dos forms offset-s src-s))))
 
-(defn- pc-do [offset s]
-  (let [[suc? offset val] ((pc-word "do()") offset s)]
-    (if suc?
-      [true offset :do]
-      [false offset nil])))
+(defn- pc-pure [v]
+  (fn [offset _] [true offset v]))
 
-(defn- pc-donot [offset s]
-  (let [[suc? offset val] ((pc-word "don't()") offset s)]
-    (if suc?
-      [true offset :donot]
-      [false offset nil])))
+(def ^:private pc-cmd-mul
+  (pc-do
+    (pc-word "mul(")
+    [x pc-int]
+    (pc-word ",")
+    [y pc-int]
+    (pc-word ")")
+    (pc-pure [:mul x y])))
 
-(defn- pc-some-command [offset s]
-  ((pc-any pc-mul
-           pc-do
-           pc-donot) offset s))
+(def ^:private pc-cmd-do
+  (pc-do
+    (pc-word "do()")
+    (pc-pure :do)))
+
+(def ^:private pc-cmd-donot
+  (pc-do
+    (pc-word "don't()")
+    (pc-pure :donot)))
+
+(def ^:private pc-some-command
+  (pc-any pc-cmd-mul pc-cmd-do pc-cmd-donot))
 
 (defn parse-wohoo [file-content]
   (loop [offset 0
