@@ -33,7 +33,28 @@
          (count-occurneces input "XMAS" x y))
        (reduce + 0)))
 
+(defn- permutes [s t a b]
+  (or (and (= s a) (= t b))
+      (and (= s b) (= t a))))
+
+(defn- check-x-mas [data x y]
+  (if (= \A (c-at data x y))
+    (let [tl (c-at data (- x 1) (- y 1))
+          br (c-at data (+ x 1) (+ y 1))
+          bl (c-at data (- x 1) (+ y 1))
+          tr (c-at data (+ x 1) (- y 1))]
+      (and (permutes tl br \M \S)
+           (permutes bl tr \M \S)))
+    false))
+
+(defn part2 [{dim :dim :as input}]
+  (->> (for [y (range dim)
+             x (range dim)]
+         (check-x-mas input x y))
+       (filter identity)
+       (count)))
+
 (defn solve []
   (let [input (parse-input)]
     [(part1 input)
-     0]))
+     (part2 input)]))
