@@ -74,6 +74,27 @@
    (map #(nth % (/ (count %) 2)))
    (reduce +)))
 
+(defn- topological-sort [trim? g start]
+  (letfn [(collect [[order seen :as orig] v]
+            (if (contains? seen v)
+              orig
+              (let [[order' seen']
+                    (reduce #(collect %1 %2)
+                            [order (conj! seen v)]
+                            (get g v))]
+                [(conj! order v) seen])))
+          (collect-trim [state v]
+            (if (trim? v) state (collect state v)))]
+    (->> start
+         (collect-trim [(transient []), (transient #{})])
+         (first)
+         (persistent!))))
+
+(defn- make-topo-order [g pages]
+  (let [present-verts (set pages)]
+    (topological-sort #(contains? present-verts %)
+                      g ???)))
+
 (defn solve []
   (let [input (parse-input)]
     [(part1 input)
