@@ -8,15 +8,6 @@
   (let [[front back] (split-with pred coll)]
     [front (rest back)]))
 
-(defn parse-input
-  ([]
-   (parse-input "inputs/day05.txt"))
-  ([file]
-   (with-open [rdr (io/reader file)]
-     (->> (line-seq rdr)
-          (doall)
-          (split-on (complement empty?))))))
-
 (defn- update!
   "Same as update but for transient data structures"
   [m k f]
@@ -40,12 +31,28 @@
       (update-vals persistent!) ;; each inner #{edges}
       ))
 
+;; Treat 11|22 orderings as edges in a dependency graph
 (defn- construct-dep-graph [edges]
   (construct-graph (fn [g od]
                      (let [[dep of] (map #(Integer/parseInt %)
                                          (str/split od #"\|"))]
                        (update! g of #(conj-set! % dep))))
                    edges))
+
+(defn- map2 [f coll]
+  (map #(map f %) coll))
+
+(defn parse-input
+  ([]
+   (parse-input "inputs/day05.txt"))
+  ([file]
+   (with-open [rdr (io/reader file)]
+     (let [[edges topos] (split-on (complement empty?)
+                                   (doall (line-seq rdr)))]
+       [(->> edges (construct-dep-graph))
+        (->> topos
+             (map #(str/split % #","))
+             (map2 #(Integer/parseInt %)))]))))
 
 (defn- valid-topo-order? [g topo]
   (let [present-verts (set topo)]
@@ -61,10 +68,13 @@
             topo)))
 
 (defn part1
-  [[edges topos]] ;; treat 11|22 orderings as edges in a dependency graph
-  (let [g (construct-dep-graph edges)
-        topos (map #(map (fn [s] (Integer/parseInt s)) (str/split % #",")) topos)]
-    (->>
-     (filter #(valid-topo-order? g %) topos)
-     (map #(nth % (/ (count %) 2)))
-     (reduce +))))
+  [[g topos]]
+  (->>
+   (filter #(valid-topo-order? g %) topos)
+   (map #(nth % (/ (count %) 2)))
+   (reduce +)))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input)
+     0]))
