@@ -67,35 +67,34 @@
             (transient #{})
             topo)))
 
-(defn part1
-  [[g topos]]
-  (->>
-   (filter #(valid-topo-order? g %) topos)
-   (map #(nth % (/ (count %) 2)))
-   (reduce +)))
-
-(defn- topological-sort [trim? g start]
-  (letfn [(collect [[order seen :as orig] v]
-            (if (contains? seen v)
-              orig
-              (let [[order' seen']
+(defn- topological-sort
+  "Topologically sort a subgraph of 'g' containing only the vertices 'verts'."
+  [g verts]
+  (letfn [(collect [[order unseen :as state] v]
+            (if (contains? unseen v)
+              (let [[order' unseen']
                     (reduce #(collect %1 %2)
-                            [order (conj! seen v)]
+                            [order (disj unseen v)]
                             (get g v))]
-                [(conj! order v) seen])))
-          (collect-trim [state v]
-            (if (trim? v) state (collect state v)))]
-    (->> start
-         (collect-trim [(transient []), (transient #{})])
-         (first)
-         (persistent!))))
-
-(defn- make-topo-order [g pages]
-  (let [present-verts (set pages)]
-    (topological-sort #(contains? present-verts %)
-                      g ???)))
+                [(conj order' v) unseen'])
+              state))]
+    (loop [order []
+           unseen (set verts)]
+      (if-let [start (first unseen)]
+        (let [[order' unseen'] (collect [order unseen] start)]
+          (recur order' unseen'))
+        order))))
 
 (defn solve []
-  (let [input (parse-input)]
-    [(part1 input)
-     0]))
+  (let [[g topos] (parse-input)
+        [valids invalids] ((juxt filter remove)
+                           #(valid-topo-order? g %) topos)
+        sum-middle (fn [lst]
+                     (->> lst
+                          (map #(nth % (/ (count %) 2)))
+                          (reduce +)))]
+    [(->> valids
+          (sum-middle))
+     (->> invalids
+          (map #(topological-sort g %))
+          (sum-middle))]))
