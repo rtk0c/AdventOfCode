@@ -3,6 +3,28 @@
 (defn map2 [f coll]
   (map #(map f %) coll))
 
+(defn reduce-i
+  "Same as `reduce`, but additionally pass index to f. Differs from `reduce-kv`
+  that this works on any seq."
+  [f init coll]
+  (loop [i 0, val init, coll coll]
+    (if-let [c (first coll)]
+      (recur (+ i 1) (f val i c) (rest coll))
+      val)))
+
+(defn reduce-2d
+  "Reduces a 2d dataset (seq of seq of items)."
+  [f init lines]
+  (reduce-i
+   (fn [val y line]
+     (reduce-i
+      (fn [val x item]
+        (f val x y item))
+      val
+      line))
+   init
+   lines))
+
 (defn split-on
   "Split seq into two partitions, separated by the element that made 'pred'
   true (which is discarded)."
