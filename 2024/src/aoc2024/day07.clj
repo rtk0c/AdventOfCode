@@ -17,20 +17,23 @@
                (reverse (map #(Long/parseLong %) rst))]))
           (doall (line-seq rdr))))))
 
-(defn- solvable? [total opers]
+(defn- solvable? [ops total opers]
   (let [c (first opers)
         r (rest opers)]
     (if (empty? r)
       (= total c)
-      (or (solvable? (- total c) r)
-          (solvable? (/ total c) r)))))
+      (->> ops
+           (map #(solvable? ops (% total c) r))
+           (some identity)))))
+
+(defn- count-solvable [ops input]
+  (->> input
+       (filter (fn [[tot opers]] (solvable? ops tot opers)))
+       (map first)
+       (reduce +)))
 
 (defn part1 [input]
-  (->>
-   input
-   (filter (fn [[tot opers]] (solvable? tot opers)))
-   (map first)
-   (reduce +)))
+  (count-solvable [- /] input))
 
 (defn solve []
   (let [input (parse-input)]
