@@ -19,11 +19,13 @@
 
 (defn- solvable? [ops total opers]
   (let [c (first opers)
-        r (rest opers)]
-    (if (empty? r)
+        rst (rest opers)]
+    (if (empty? rst)
       (= total c)
       (->> ops
-           (map #(solvable? ops (% total c) r))
+           (map #(% total c))
+           (filter some?)
+           (map #(solvable? ops % rst))
            (some identity)))))
 
 (defn- count-solvable [ops input]
@@ -34,6 +36,29 @@
 
 (defn part1 [input]
   (count-solvable [- /] input))
+
+;; oops, wrong function
+(defn- ||
+  "Concat two numbers as decimal strings."
+  [a b]
+  (long
+   (+ (* a (Math/pow 10 (+ 1 (long (Math/log10 b)))))
+      b)))
+
+(def pow10table
+  (mapv #(long (Math/pow 10 %)) (range 1 18)))
+
+(defn- |-
+  "Break away the suffix b from a as a decimal string."
+  [a b]
+  (let [b-digits (int (Math/log10 b)) ;; digits "0-indexed", e.g. 12 => 1, 123 => 2
+        mask (nth pow10table b-digits)]
+    (if (= b (rem a mask))
+      (quot a mask)
+      nil)))
+
+(defn part2 [input]
+  (count-solvable [- / |-] input))
 
 (defn solve []
   (let [input (parse-input)]
