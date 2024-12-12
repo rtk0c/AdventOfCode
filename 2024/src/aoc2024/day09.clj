@@ -21,29 +21,32 @@
 
 ;; This is dumb
 (defn- fill-void-with-files [res void-length files]
+  ;; returns [<result> <#files consumed>]
   (loop [res res
          vlen void-length
-         files' files]
+         files' files
+         num-consumed 0]
     (let [file (first files')
           fid (get file 0)
           flen (get file 1)]
       (cond
-        (nil? file) (reduced [res files'])
+        (nil? file) (reduced [res num-consumed])
         (= vlen 0) [res files']
         (>= flen vlen) [(conj res [fid vlen])
                         (if (= flen vlen)
-                          (rest files')
-                          (conj (rest files')
-                                [fid (- flen vlen)]))]
+                          (+ num-consumed 1)
+                          (num-consumed))]
         :else (recur (conj res [fid flen])
                      (- vlen flen)
-                     (rest files'))))))
+                     (rest files')
+                     (+ num-consumed 1))))))
 
 (defn- replace-voids [dm]
   ;; TODO generate `files` by cutting off dm at a length
-  (reduce-kv (fn [[res files] i elm]
+  (reduce-kv (fn [[res num-consumed] i elm]
                (if (vector? elm)
                  (conj res elm)
-                 (fill-void-with-files res elm files)))
-             [[] (reverse (take-files dm))]
+                 (fill-void-with-files res elm
+                                       (drop num-consumed (reverse (take-files dm))))))
+             [[] 0]
              dm))
