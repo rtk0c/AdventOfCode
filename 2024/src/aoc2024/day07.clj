@@ -37,16 +37,16 @@
 (defn part1 [input]
   (count-solvable [- /] input))
 
+(def pow10table
+  (mapv #(long (Math/pow 10 %)) (range 1 18)))
+
 ;; oops, wrong function
 (defn- ||
   "Concat two numbers as decimal strings."
   [a b]
-  (long
-   (+ (* a (Math/pow 10 (+ 1 (long (Math/log10 b)))))
-      b)))
-
-(def pow10table
-  (mapv #(long (Math/pow 10 %)) (range 1 18)))
+  (let [b-digits (int (Math/log10 b))
+        shift (nth pow10table b-digits)]
+    (long (+ (* shift a) b))))
 
 (defn- |-
   "Break away the suffix b from a as a decimal string."
