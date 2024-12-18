@@ -18,29 +18,26 @@ public class Day09 {
         return input;
     }
 
-    public static long solvePart1(int[] data) {
-        var input = preprocess(data);
+    public static long solvePart1(int[] input) {
         var out = new ArrayList<Inode>();
 
         int copyPtr = 0;
         int fillPtr = input.length - 1;
 
         while (copyPtr < fillPtr) {
-            out.add(input[copyPtr]);
-            int voidLen = input[copyPtr + 1].length;
+            out.add(new Inode(copyPtr / 2, input[copyPtr]));
+            int voidLen = input[copyPtr + 1];
 
             while (voidLen != 0) {
                 var fill = input[fillPtr];
-                if (voidLen >= fill.length) {
-                    out.add(fill);
-                    voidLen -= fill.length;
-                    // Inode object used by output
-                    /*fill.length = 0;*/
-                    input[fillPtr] = null;
+                if (voidLen >= fill) {
+                    out.add(new Inode(fillPtr / 2, fill));
+                    voidLen -= fill;
+                    //input[fillPtr] = 0;
                     fillPtr -= 2;
                 } else {
-                    out.add(new Inode(fill.id, voidLen));
-                    fill.length -= voidLen;
+                    out.add(new Inode(fillPtr / 2, voidLen));
+                    input[fillPtr] -= voidLen;
                     voidLen = 0;
                 }
             }
@@ -48,11 +45,8 @@ public class Day09 {
             copyPtr += 2;
         }
         if (copyPtr == fillPtr) {
-            out.add(input[fillPtr]);
+            out.add(new Inode(fillPtr / 2, input[fillPtr]));
         }
-
-        //System.out.println(Arrays.toString(input));
-        //System.out.println(out);
 
         long prod = 0;
         int pos = 0;
