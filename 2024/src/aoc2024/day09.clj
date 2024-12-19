@@ -1,6 +1,7 @@
 (ns aoc2024.day09
   (:require [clojure.string :as str]))
-(import aoc2024.Day09)
+
+(import aoc2024.day09.Day09)
 
 (defn parse-input
   ([] (parse-input "inputs/day09.txt"))
