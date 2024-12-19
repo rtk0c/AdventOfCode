@@ -1,5 +1,6 @@
 (ns aoc2024.day18
-  (:require [clojure.java.io :as io]
+  (:require [aoc2024.utils :refer [whilex]]
+            [clojure.java.io :as io]
             [clojure.string :as str]))
 
 (defn parse-input
@@ -12,27 +13,17 @@
              y (Integer/parseInt (subs line (+ 1 i)))]
          [x y])))))
 
-(defn- apply-obstable [grid width [x y]]
+(defn- grid-add-obstable [grid width [x y]]
   (assoc grid
          (+ (* y width) x)
          \#))
 
-(defmacro whilex
-  [condition & body]
-  `(loop []
-     (if (not ~condition)
-       nil
-       (let [res# (do ~@body)]
-         (if (reduced? res#)
-           (deref res#)
-           (recur))))))
-
-(defn- iterate-til-reduced
-  [f x]
-  (loop [v x]
-    (if (reduced? v)
-      (deref v)
-      (recur (f v)))))
+(defn- grid-show-path [grid width height path]
+  (persistent!
+   (reduce (fn [grid [x y]]
+             (assoc! grid (+ x (* width y)) \O))
+           (transient grid)
+           path)))
 
 (defn- reconstruct-path [predcessors goal]
   (loop [path (transient [])
@@ -65,18 +56,8 @@
               (.put predcessor node' node)
               (.offer pq [(+ cost' (fcost x' y')) node']))))))))
 
-(defn- solve-maze [input dim]
-  (let [grid0 (vec (take (* dim dim) (repeat \.)))
-        grid (reduce #(apply-obstable %1 dim %2) grid0 input)]
-    (print-grid grid dim dim)
-    (a-star grid dim dim
-            (fn [x y] (+ (abs (- x (- dim 1)))
-                         (abs (- y (- dim 1)))))
-            (fn [x y] (and
-                       (< -1 x dim) (< -1 y dim)
-                       (= (get grid (+ x (* dim y))) \.)))
-            0 0
-            (- dim 1) (- dim 1))))
+(defn- make-grid [width height fill]
+  (vec (take (* width height) (repeat fill))))
 
 (defn- print-grid [grid width height]
   (doseq [y (range 0 height)]
@@ -84,6 +65,44 @@
                      (* y width)
                      (* (+ 1 y) width)))))
 
+(defn- solve-maze [grid width height]
+  (a-star grid width height
+          (fn [x y] (+ (abs (- x (- width 1)))
+                       (abs (- y (- height 1)))))
+          (fn [x y] (and
+                     (< -1 x width) (< -1 y height)
+                     (= (get grid (+ x (* width y))) \.)))
+          0 0
+          (- width 1) (- height 1)))
+
 (defn part1 [input]
-  (- (count (solve-maze (take 1024 input) 71))
-     1))
+  (let [dim 71
+        grid (reduce #(grid-add-obstable %1 dim %2)
+                     (make-grid dim dim \.)
+                     (take 1024 input))]
+    (- (count (solve-maze grid dim dim))
+       1)))
+
+(defn part2 [input]
+  (let [dim 71]
+    (loop [grid (reduce #(grid-add-obstable %1 dim %2)
+                        (make-grid dim dim \.)
+                        (take 1024 input))
+           obstacles (drop 1024 input)
+           path (set (solve-maze grid dim dim))]
+      (let [obs (first obstacles)
+            grid' (grid-add-obstable grid dim obs)]
+        (if (contains? path obs)
+          ;; Debris landed on path, recalculate
+          (if-some [path' (solve-maze grid' dim dim)]
+            ;; Still pathable
+            (recur grid' (rest obstacles) (set path'))
+            ;; Blocked, return this debris
+            obs)
+          ;; Debris landed outside current path, doesn't change anything
+          (recur grid' (rest obstacles) path))))))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input)
+     (part2 input)]))
