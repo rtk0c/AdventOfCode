@@ -1,7 +1,24 @@
 (ns aoc2024.utils)
 
+(defmacro whilex
+  [condition & body]
+  `(loop []
+     (if (not ~condition)
+       nil
+       (let [res# (do ~@body)]
+         (if (reduced? res#)
+           (deref res#)
+           (recur))))))
+
 (defn map2 [f coll]
   (map #(map f %) coll))
+
+(defn iterate-til-reduced
+  [f x]
+  (loop [v x]
+    (if (reduced? v)
+      (deref v)
+      (recur (f v)))))
 
 (defn reduce-i
   "Same as `reduce`, but additionally pass index to f. Differs from `reduce-kv`
@@ -84,3 +101,29 @@
         (let [[order' unseen'] (collect [order unseen] start)]
           (recur order' unseen'))
         order))))
+
+(defn- a*-reconstruct-path [predcessors goal]
+  (loop [path (transient [])
+         pos goal]
+    (if-let [prev-pos (.get predcessors pos)]
+      (recur (conj! path pos)
+             prev-pos)
+      (persistent! (conj! path pos)))))
+
+(defn a* [fneigh fcost fheuristic pos0 posf]
+  (let [pq (new java.util.PriorityQueue)
+        costs (new java.util.HashMap)
+        predcessor (new java.util.HashMap)]
+    (.offer pq [0 pos0])
+    (.put costs pos0 0)
+    (whilex (not (.isEmpty pq))
+      (let [[_ pos] (.remove pq)
+            cost (.get costs pos)]
+        (if (= pos posf)
+          (reduced (a*-reconstruct-path predcessor pos))
+          (doseq [pos' (fneigh pos)
+                  :let [cost' (+ cost (fcost pos pos'))]]
+            (when (< cost' (.getOrDefault costs pos' Integer/MAX_VALUE))
+              (.put costs pos' cost')
+              (.put predcessor pos' pos)
+              (.offer pq [(+ cost' (fheuristic pos')) pos']))))))))

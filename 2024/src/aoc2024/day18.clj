@@ -1,5 +1,5 @@
 (ns aoc2024.day18
-  (:require [aoc2024.utils :refer [whilex]]
+  (:require [aoc2024.utils :refer [a*]]
             [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -25,37 +25,6 @@
            (transient grid)
            path)))
 
-(defn- reconstruct-path [predcessors goal]
-  (loop [path (transient [])
-         pos goal]
-    (if-let [prev-pos (.get predcessors pos)]
-      (recur (conj! path pos)
-             prev-pos)
-      (persistent! (conj! path pos)))))
-
-(defn- a-star [grid width height fcost fallowed? x0 y0 xf yf]
-  (let [pq (new java.util.PriorityQueue)
-        costs (new java.util.HashMap)
-        predcessor (new java.util.HashMap)
-        pos0 [x0 y0]]
-    (.offer pq [0 pos0])
-    (.put costs pos0 0)
-    (whilex (not (.isEmpty pq))
-      (let [[_ [x y :as node]] (.remove pq)
-            cost (.get costs node)]
-        (if (and (= x xf) (= y yf))
-          (reduced (reconstruct-path predcessor node))
-          (doseq [[dx dy] [[-1 0] [0 1] [1 0] [0 -1]]
-                  :when (fallowed? (+ x dx) (+ y dy))
-                  :let [x' (+ x dx)
-                        y' (+ y dy)
-                        node' [x' y']
-                        cost' (+ cost 1)]]
-            (when (< cost' (.getOrDefault costs node' Integer/MAX_VALUE))
-              (.put costs node' cost')
-              (.put predcessor node' node)
-              (.offer pq [(+ cost' (fcost x' y')) node']))))))))
-
 (defn- make-grid [width height fill]
   (vec (take (* width height) (repeat fill))))
 
@@ -65,23 +34,35 @@
                      (* y width)
                      (* (+ 1 y) width)))))
 
+(defn- cardinal-neighbors [x y]
+  [[(+ x 1) y]
+   [x (+ y 1)]
+   [x (- y 1)]
+   [(- x 1) y]])
+
 (defn- solve-maze [grid width height]
-  (a-star grid width height
-          (fn [x y] (+ (abs (- x (- width 1)))
-                       (abs (- y (- height 1)))))
-          (fn [x y] (and
-                     (< -1 x width) (< -1 y height)
-                     (= (get grid (+ x (* width y))) \.)))
-          0 0
-          (- width 1) (- height 1)))
+  (let [xf (- width 1)
+        yf (- height 1)]
+    (a* (fn [[x y]]
+          (filter
+           (fn [[x y]]
+             (and (< -1 x width) (< -1 y height)
+                  (= \. (get grid (+ x (* width y))))))
+           (cardinal-neighbors x y)))
+        (fn [_ _] 1)
+        (fn [[x y]] (+ (abs (- x xf))
+                       (abs (- y yf))))
+        [0 0]
+        [xf yf])))
 
 (defn part1 [input]
   (let [dim 71
         grid (reduce #(grid-add-obstable %1 dim %2)
                      (make-grid dim dim \.)
-                     (take 1024 input))]
-    (- (count (solve-maze grid dim dim))
-       1)))
+                     (take 1024 input))
+        path (solve-maze grid dim dim)]
+    (print-grid (grid-show-path grid dim dim path) dim dim)
+    (- (count path) 1)))
 
 (defn part2 [input]
   (let [dim 71]
