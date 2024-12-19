@@ -1,4 +1,5 @@
-(ns aoc2024.utils)
+(ns aoc2024.utils
+  (:require [clojure.string :as str]))
 
 (defmacro whilex
   [condition & body]
@@ -9,6 +10,16 @@
          (if (reduced? res#)
            (deref res#)
            (recur))))))
+
+(defn remove-prefix [s prefix]
+  (if (str/starts-with? s prefix)
+    (subs s (count prefix))
+    s))
+
+(defn remove-suffix [s suffix]
+  (if (str/ends-with? s suffix)
+    (subs s 0 (- (count s) (count suffix)))
+    s))
 
 (defn map2 [f coll]
   (map #(map f %) coll))
