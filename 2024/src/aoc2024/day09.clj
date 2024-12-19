@@ -10,3 +10,10 @@
 
 (defn part1 [input]
   (Day09/solvePart1 (int-array input)))
+
+(defn part2 [input]
+  (Day09/solvePart2 (int-array input)))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input) (part2 input)]))
