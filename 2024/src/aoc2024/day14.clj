@@ -23,7 +23,7 @@
    (with-open [rdr (io/reader file)]
      (for [line (doall (line-seq rdr))
            :let [nums (re-seq #"-?\d+" line)]]
-       (map #(Integer/parseInt %) nums)))))
+       (map #(Long/parseLong %) nums)))))
 
 (defn- fly-robot [[x y vx vy] t]
   [(+ x (* vx t))
@@ -53,6 +53,36 @@
              (int-array 4))
      (reduce * 1))))
 
+(defn- print-formation [robots width height]
+  (let [m (char-array (* width height))]
+    (java.util.Arrays/fill m \.)
+    (doseq [[x y] robots]
+      (aset m (+ x (* width y)) \#))
+    (doseq [i (range 0 (* height width) width)]
+      (doseq [j (range width)]
+        (print (aget m (+ i j))))
+      (println))))
+
+(defn part2 [input width height]
+  (let [tree-stem-height (* height 2/5)] ;; random guess for it
+    (->>
+     (map (fn [time robots]
+            [(+ time 1)
+             (map #(-> (fly-robot %1 (+ time 1))
+                       (normalize-robot width height))
+                  robots)])
+          (range)
+          (repeat input))
+     (map (fn [[time robots]]
+            [time robots (group-by first robots)])) ;; group by x coordinate
+     (filter                                        ;; find ones that
+      (fn [[_ _ formation]]
+        (some #(> (count %) tree-stem-height)
+              (vals formation))))
+     (first))))
+
 (defn solve []
   (let [input (parse-input)]
+    (let [[_ robots _] (part2 input 101 103)]
+      (print-formation robots 101 103))
     [(part1 input 101 103)]))
