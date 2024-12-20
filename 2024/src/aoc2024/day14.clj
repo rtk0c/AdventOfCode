@@ -39,21 +39,13 @@
       (+ xi yi)
       nil)))
 
-(defn part1 [input width height]
-  (let [x50 (quot width 2) y50 (quot height 2)]
-    (->>
-     input
-     (map #(-> (fly-robot % 100)
-               (normalize-robot width height)))
-     (reduce (fn [stats [x y]]
-               (when-some [q (which-quad x y x50 y50)]
-                 (aset stats q
-                       (+ 1 (aget stats q))))
-               stats)
-             (int-array 4))
-     (reduce * 1))))
+(defn- calc-formation [robots width height t]
+  (map #(-> (fly-robot % t)
+            (normalize-robot width height))
+       robots))
 
-(defn- print-formation [robots width height]
+(defn- print-formation
+  [robots width height]
   (let [m (char-array (* width height))]
     (java.util.Arrays/fill m \.)
     (doseq [[x y] robots]
@@ -63,26 +55,69 @@
         (print (aget m (+ i j))))
       (println))))
 
-(defn part2 [input width height]
-  (let [tree-stem-height (* height 2/5)] ;; random guess for it
+(defn- calc-formations
+  "Infinite seq of robot formations, presented as [<t> <f(t)>]"
+  [robots width height skip]
+  (map (fn [time robots]
+         (let [t (+ time 1 skip)]
+           [t, (calc-formation robots width height t)]))
+       (range)
+       (repeat robots)))
+
+(defn part1 [input width height]
+  (let [x50 (quot width 2) y50 (quot height 2)]
     (->>
-     (map (fn [time robots]
-            [(+ time 1)
-             (map #(-> (fly-robot %1 (+ time 1))
-                       (normalize-robot width height))
-                  robots)])
-          (range)
-          (repeat input))
-     (map (fn [[time robots]]
-            [time robots (group-by first robots)])) ;; group by x coordinate
-     (filter                                        ;; find ones that
-      (fn [[_ _ formation]]
-        (some #(> (count %) tree-stem-height)
-              (vals formation))))
-     (first))))
+     (calc-formation input width height 100)
+     (reduce (fn [stats [x y]]
+               (when-some [q (which-quad x y x50 y50)]
+                 (aset stats q
+                       (+ 1 (aget stats q))))
+               stats)
+             (int-array 4))
+     (reduce * 1))))
+
+;; Usage: just dump like 10000 snapshots into a file, and examine the file by hand
+(defn save-robot-formations
+  "Save the given list of formations to file. Get formations by running (->> (robot-formations ...) (take ...))"
+  [width height formations file]
+  (with-open [wtr (io/writer file)]
+    (binding [*out* wtr]
+      (doseq [[t robots] formations]
+        (println "t = " t)
+        (print-formation robots width height)
+        (println)))))
+
+(defn- continuous? [xs]
+  (let [xs (sort xs)
+        xs' (map - (rest xs) xs)]
+    (> (count (filter #(= % 1) xs'))
+       8))) ;; random constant that seems good
+
+;; The christmas tree looks like a bunch of solid triangles stacked on top of
+;; each other, surrounded by a frame. Located anywhere in the 101x103 grid.
+;;
+;; Try to detect it by looking for a lots of continuous stripes of robots.
+;; Tested on personal data, does this in fact find the christmas tree.
+(defn- likely-christmas-tree? [robots]
+  (let [x-gp (-> (group-by first robots) (update-vals #(map second %)) (vals))
+        y-gp (-> (group-by second robots) (update-vals #(map first %)) (vals))
+        cont? (fn [xs]
+                (> (->> xs (map continuous?)
+                        (filter identity)
+                        (count))
+                   2))]
+    (and (cont? x-gp)
+         (cont? y-gp))))
+
+(defn part2 [input width height search-upper-bound]
+  (->>
+   (robot-formations input width height 0)
+   (take search-upper-bound)
+   (filter #(likely-christmas-tree? (second %)))
+   (first)))
 
 (defn solve []
   (let [input (parse-input)]
-    (let [[_ robots _] (part2 input 101 103)]
-      (print-formation robots 101 103))
-    [(part1 input 101 103)]))
+    [(part1 input 101 103)
+     ;; `part2` spits out [t, f t] and we just want t
+     (first (part2 input 101 103 10000))]))
