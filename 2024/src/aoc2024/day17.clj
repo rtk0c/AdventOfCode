@@ -34,10 +34,15 @@
   ;; Uh, that's just frankly ridiculously big of a search range, so no
   ;; TODO find clever way to reverse the (what's effectively) a hash function
   (let [prog-arr (int-array prog)]
-    (->> (range ???? ????)
+    (->> (range 0 0) ;; ???? ????
          (map (fn [a]
                 (let [pc (new Processor)]
                   (.reset pc a 0 0)
                   (every? identity (map = prog-arr (.run pc prog-arr))))))
          (filter identity)
          (first))))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input)
+     nil]))

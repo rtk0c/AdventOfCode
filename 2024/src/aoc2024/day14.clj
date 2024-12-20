@@ -97,7 +97,7 @@
 ;; each other, surrounded by a frame. Located anywhere in the 101x103 grid.
 ;;
 ;; Try to detect it by looking for a lots of continuous stripes of robots.
-;; Tested on personal data, does this in fact find the christmas tree.
+j; Tested on personal data, does this in fact find the christmas tree.
 (defn- likely-christmas-tree? [robots]
   (let [x-gp (-> (group-by first robots) (update-vals #(map second %)) (vals))
         y-gp (-> (group-by second robots) (update-vals #(map first %)) (vals))
@@ -111,7 +111,7 @@
 
 (defn part2 [input width height search-upper-bound]
   (->>
-   (robot-formations input width height 0)
+   (calc-formations input width height 0)
    (take search-upper-bound)
    (filter #(likely-christmas-tree? (second %)))
    (first)))

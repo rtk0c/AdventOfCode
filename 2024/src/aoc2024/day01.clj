@@ -4,15 +4,15 @@
 
 (defn parse-input []
   ;; Bleh
-  (let [left-list (transient [])
-        right-list (transient [])]
-    (with-open [rdr (io/reader "inputs/day01.txt")]
-      (doseq [line (line-seq rdr)]
-        (let [left (subs line 0 (str/index-of line \space))
-              right (subs line (+ 1 (str/last-index-of line \space)))]
-          (conj! left-list (Integer/parseInt left))
-          (conj! right-list (Integer/parseInt right)))))
-    [(persistent! left-list) (persistent! right-list)]))
+  (with-open [rdr (io/reader "inputs/day01.txt")]
+    (loop [left-list (transient [])
+           right-list (transient [])
+           lines (line-seq rdr)]
+      (if-some [line (first lines)]
+        (recur (conj! left-list (Integer/parseInt (subs line 0 (str/index-of line \space))))
+               (conj! right-list (Integer/parseInt (subs line (+ 1 (str/last-index-of line \space)))))
+               (rest lines))
+        [(persistent! left-list) (persistent! right-list)]))))
 
 (defn part1 [[llist rlist]]
   (let [llist (sort llist)

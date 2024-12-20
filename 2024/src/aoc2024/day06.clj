@@ -22,6 +22,6 @@
   )
 
 (defn solve []
-  (let [input (parse-input2)]
+  (let [input (parse-input)]
     [(part1 input)
      0]))

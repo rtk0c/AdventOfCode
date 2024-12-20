@@ -61,7 +61,7 @@
                      (make-grid dim dim \.)
                      (take 1024 input))
         path (solve-maze grid dim dim)]
-    (print-grid (grid-show-path grid dim dim path) dim dim)
+    ;(print-grid (grid-show-path grid dim dim path) dim dim)
     (- (count path) 1)))
 
 (defn part2 [input]
