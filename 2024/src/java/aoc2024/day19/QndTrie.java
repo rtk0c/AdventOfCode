@@ -21,10 +21,10 @@ public class QndTrie {
         };
     }
 
-    private static int index(String s) {
+    private static int index(String s, int baseI) {
         assert s.length() >= 2;
-        char c0 = s.charAt(0);
-        char c1 = s.charAt(1);
+        char c0 = s.charAt(baseI);
+        char c1 = s.charAt(baseI + 1);
         return index(c1) * 5 + index(c0);
     }
 
@@ -41,7 +41,7 @@ public class QndTrie {
 
         for (var needle : needles) {
             if (needle.length() > 1) {
-                entries[index(needle)].add(needle);
+                entries[index(needle, 0)].add(needle);
             } else {
                 int c0 = index(needle.charAt(0));
                 for (int c1 = 0; c1 < 5; ++c1) {
@@ -58,26 +58,11 @@ public class QndTrie {
         }
     }
 
-    public String[] prefixes(String haystack) {
-        if (haystack.length() > 1) {
-            return entries[index(haystack)];
+    public String[] prefixes(String haystack, int baseI) {
+        if (haystack.length() - baseI > 1) {
+            return entries[index(haystack, baseI)];
         } else {
-            return singles[index(haystack.charAt(0))];
+            return singles[index(haystack.charAt(baseI))];
         }
-    }
-
-    // Assumes haystack only contains valid chars
-    public String[] startsWith(String haystack) {
-        if (haystack.length() == 1) {
-            return new String[] { haystack };
-        }
-
-        var res = new ArrayList<String>();
-        var needles = entries[index(haystack)];
-        for (var needle : needles) {
-            if (haystack.startsWith(needle))
-                res.add(needle);
-        }
-        return res.toArray(new String[0]);
     }
 }

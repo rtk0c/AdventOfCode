@@ -15,19 +15,41 @@
 (defn- pa [arr]
   (println (seq arr)))
 
-(defn- pattern-makeable? [tlas pattern]
-  (if (empty? pattern)
-    true
-    (some (fn [towel]
-            (when (str/starts-with? pattern towel)
-              (pattern-makeable? tlas (subs pattern (count towel)))))
-          (.prefixes tlas pattern))))
+(defn- matches? [s i substr]
+  (if (> (count substr)
+         (- (count s) i))
+    false
+    (loop [j 0]
+      (cond
+        (= j (count substr)) true
+        (not= (nth s (+ i j))
+              (nth substr j)) false
+        :else (recur (+ j 1))))))
+
+(defn- pattern-makeable?
+  ([^QndTrie tlas ^String pattern ^ints lut ^long i]
+   (cond
+     (>= i (count pattern)) true
+     ;; LUT content: 0 -> not filled, 1/2 -> filled true/false
+     (= 1 (aget lut i)) true
+     (= 2 (aget lut i)) false
+     :else
+     (if (some #(when (matches? pattern i %)
+                  (pattern-makeable? tlas pattern lut (+ i (count %))))
+               (.prefixes tlas pattern i))
+       (do
+         (aset lut i 1)
+         true)
+       (do
+         (aset lut i 2)
+         false))))
+  ([^QndTrie tlas ^String pattern]
+   (let [lut (int-array (count pattern))]
+     (pattern-makeable? tlas pattern lut 0))))
 
 (defn part1 [{towels :towels patterns :patterns}]
   (let [tlas (new QndTrie (into-array String towels))]
     (->> patterns
-         (map #(do
-                 (println %)
-                 (pattern-makeable? tlas %)))
+         (map #(pattern-makeable? tlas %))
          (filter identity)
          (count))))
