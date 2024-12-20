@@ -26,30 +26,29 @@
               (nth substr j)) false
         :else (recur (+ j 1))))))
 
-(defn- pattern-makeable?
-  ([^QndTrie tlas ^String pattern ^ints lut ^long i]
+(defn- pattern-arrangements
+  ([^QndTrie tlas ^String pattern ^longs lut ^long i]
    (cond
-     (>= i (count pattern)) true
-     ;; LUT content: 0 -> not filled, 1/2 -> filled true/false
-     (= 1 (aget lut i)) true
-     (= 2 (aget lut i)) false
+     (>= i (count pattern)) 1
+     (not= -1 (aget lut i)) (aget lut i)
      :else
-     (if (some #(when (matches? pattern i %)
-                  (pattern-makeable? tlas pattern lut (+ i (count %))))
-               (.prefixes tlas pattern i))
-       (do
-         (aset lut i 1)
-         true)
-       (do
-         (aset lut i 2)
-         false))))
+     (let [res (->>
+                (.prefixes tlas pattern i)
+                (filter #(matches? pattern i %))
+                (map #(pattern-arrangements tlas pattern lut (+ i (count %))))
+                (reduce +))]
+       (aset lut i res)
+       res)))
   ([^QndTrie tlas ^String pattern]
-   (let [lut (int-array (count pattern))]
-     (pattern-makeable? tlas pattern lut 0))))
+   (let [lut (long-array (count pattern))]
+     (java.util.Arrays/fill lut -1)
+     (pattern-arrangements tlas pattern lut 0))))
 
-(defn part1 [{towels :towels patterns :patterns}]
-  (let [tlas (new QndTrie (into-array String towels))]
-    (->> patterns
-         (map #(pattern-makeable? tlas %))
-         (filter identity)
-         (count))))
+(defn solve []
+  (let [{towels :towels patterns :patterns} (parse-input)
+        ;; Towel Look-up Accelaration Structure
+        tlas (new QndTrie (into-array String towels))
+        patterns (map #(pattern-arrangements tlas %)
+                      patterns)]
+    [(->> patterns (filter #(> % 0)) (count))
+     (->> patterns (reduce +))]))
