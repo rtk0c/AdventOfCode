@@ -12,9 +12,6 @@
            towels (str/split (str/trim towels) #", ")]
        {:towels towels :patterns patterns}))))
 
-(defn- pa [arr]
-  (println (seq arr)))
-
 (defn- matches? [s i substr]
   (if (> (count substr)
          (- (count s) i))

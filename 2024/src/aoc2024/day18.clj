@@ -1,5 +1,5 @@
 (ns aoc2024.day18
-  (:require [aoc2024.utils :refer [a*]]
+  (:require [aoc2024.utils :refer [a* cardinal-neighbors]]
             [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -33,12 +33,6 @@
     (println (subvec grid
                      (* y width)
                      (* (+ 1 y) width)))))
-
-(defn- cardinal-neighbors [x y]
-  [[(+ x 1) y]
-   [x (+ y 1)]
-   [x (- y 1)]
-   [(- x 1) y]])
 
 (defn- solve-maze [grid width height]
   (let [xf (- width 1)

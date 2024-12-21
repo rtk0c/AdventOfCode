@@ -113,6 +113,12 @@
           (recur order' unseen'))
         order))))
 
+(defn cardinal-neighbors [x y]
+  [[(+ x 1) y]
+   [x (+ y 1)]
+   [x (- y 1)]
+   [(- x 1) y]])
+
 (defn- a*-reconstruct-path [predcessors goal]
   (loop [path (transient [])
          pos goal]
