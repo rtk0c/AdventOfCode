@@ -1,6 +1,10 @@
 (ns aoc2024.utils
   (:require [clojure.string :as str]))
 
+(def pow10table
+  "At index i contains value 10^(i+1)"
+  (mapv #(long (Math/pow 10 %)) (range 1 18)))
+
 (defmacro whilex
   [condition & body]
   `(loop []

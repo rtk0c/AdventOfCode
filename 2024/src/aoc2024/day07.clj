@@ -1,5 +1,6 @@
 (ns aoc2024.day07
-  (:require [clojure.java.io :as io]
+  (:require [aoc2024.utils :refer [pow10table]]
+            [clojure.java.io :as io]
             [clojure.string :as str]))
 
 ;; AoC problem defines operation order as left-associative.
@@ -36,9 +37,6 @@
 
 (defn part1 [input]
   (count-solvable [- /] input))
-
-(def pow10table
-  (mapv #(long (Math/pow 10 %)) (range 1 18)))
 
 ;; oops, wrong function
 (defn- ||
