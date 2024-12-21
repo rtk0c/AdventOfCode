@@ -1,5 +1,5 @@
 (ns aoc2024.day10
-  (:require [aoc2024.utils :refer [cardinal-neighbors]]
+  (:require [aoc2024.utils :refer [cardinal-neighbors print-2d-array]]
             [clojure.java.io :as io]
             [clojure.string :as str]))
 
@@ -39,6 +39,35 @@
            (count (set (f x y))))
          (reduce +))))
 
+(defn part2 [{width :width height :height heightmap :map}]
+  (let [scores (int-array (count heightmap))
+        idx (fn [x y] (+ x (* width y)))
+        calc-score
+        (fn [h x y]
+          (if (= h max-h)
+            1
+            (->> (for [[x' y'] (cardinal-neighbors x y)
+                       :let [i (idx x' y')]]
+                   (if (and (< -1 x' width)
+                            (< -1 y' height)
+                            (= (+ h 1) (aget heightmap i)))
+                     (aget scores i) 0))
+                 (reduce +))))]
+    (doseq [h (reverse (range (+ 1 max-h)))
+            y (range height)
+            x (range width)
+            :let [i (idx x y)]]
+      (when (= h (aget heightmap i))
+        (aset scores i (calc-score h x y))))
+    ;(print-2d-array heightmap width height)
+    ;(println)
+    ;(print-2d-array scores width height)
+    (->> (range (count scores))
+         (filter #(= 0 (aget heightmap %)))
+         (map #(aget scores %))
+         (reduce +))))
+
 (defn solve []
   (let [input (parse-input)]
-    [(part1 input)]))
+    [(part1 input)
+     (part2 input)]))
