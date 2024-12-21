@@ -65,7 +65,6 @@
   [m k f]
   (assoc! m k (f (get m k))))
 
-
 (defn conj-set!
   "Same as conj! but automatically creates a new transient set with x if 'coll' is nil."
   [coll x]
@@ -144,3 +143,12 @@
               (.put costs pos' cost')
               (.put predcessor pos' pos)
               (.offer pq [(+ cost' (fheuristic pos')) pos']))))))))
+
+(defn print-array [arr]
+  (println (seq arr)))
+
+(defn print-2d-array [a w h]
+  (doseq [y (range h)]
+    (doseq [x (range w)]
+      (print (aget a (+ x (* y w))) \space))
+    (println)))

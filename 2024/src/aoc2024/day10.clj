@@ -17,39 +17,28 @@
 
 (def max-h 9)
 
-(defn- pa [arr]
-  (println (seq arr)))
-
-(defn print-array [a w h]
-  (doseq [y (range h)]
-    (doseq [x (range w)]
-      (print (aget a (+ x (* y w))) \space))
-    (println)))
-
 (defn part1 [{width :width height :height heightmap :map}]
-  (let [scores (int-array (count heightmap))
-        idx (fn [x y] (+ x (* width y)))
-        calc-score
-        (fn [h x y]
-          (if (= h max-h)
-            1
-            (->> (for [[x' y'] (cardinal-neighbors x y)
-                       :let [i (idx x' y')]]
-                   (if (and (< -1 x' width)
-                            (< -1 y' height)
-                            (= (+ h 1) (aget heightmap i)))
-                     (aget scores i) 0))
-                 (reduce +))))]
-    (doseq [h (reverse (range (+ 1 max-h)))
-            y (range height)
-            x (range width)
-            :let [i (idx x y)]]
-      (when (= h (aget heightmap i))
-        (aset scores i (calc-score h x y))))
-    (print-array heightmap width height)
-    (println)
-    (print-array scores width height)
-    (->> (range (count scores))
-         (filter #(= 0 (aget heightmap %)))
-         (map #(aget scores %))
+  (letfn [(idx [x y]
+            (+ x (* width y)))
+          (f [x y]
+            (let [i (idx x y)
+                  h (aget heightmap i)]
+              (if (= h 9)
+                [[x y]]
+                (->> (cardinal-neighbors x y)
+                     (filter (fn [[x y]]
+                               (and (< -1 x width)
+                                    (< -1 y height)
+                                    (= (+ h 1)
+                                       (aget heightmap (idx x y))))))
+                     (mapcat (fn [[x y]]
+                               (f x y)))))))]
+    (->> (for [y (range height)
+               x (range width)
+               :when (= 0 (aget heightmap (idx x y)))]
+           (count (set (f x y))))
          (reduce +))))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input)]))
