@@ -51,6 +51,12 @@
 (defn grid-set [[grid w h] x y v]
   (aset grid (+ x (* w y)) v))
 
+(defn grid-map [[grid w h] f]
+  (let [grid' (amap grid idx ret
+                    (let [v (aget grid idx)]
+                      (f v)))]
+    [grid' w h]))
+
 (defn floodfill [[grid w h] x0 y0]
   (let [dists (int-array (count grid) -1)
         stack (new java.util.ArrayDeque)
@@ -78,8 +84,8 @@
 
 (defn part1 [{[_ w h :as g] :map [x0 y0] :start [xf yf] :end}]
   (let [df-s (floodfill g x0 y0)
-        df-e (floodfill g xf yf)
-        reg-time (grid-at df-s xf yf)]
+        reg-time (grid-at df-s xf yf)
+        df-e (grid-map df-s #(if (< % 0) % (- reg-time %)))]
     (->> (for [y (range h)
                x (range w)
                :when (not= (grid-at g x y) \#)]
