@@ -15,6 +15,14 @@
            (deref res#)
            (recur))))))
 
+(defmacro while-some
+  [[var expr] & body]
+  `(loop []
+     (if-some [~var ~expr]
+       (do ~@body
+           (recur))
+       nil)))
+
 (defn remove-prefix [s prefix]
   (if (str/starts-with? s prefix)
     (subs s (count prefix))
@@ -44,7 +52,7 @@
       (recur (+ i 1) (f val i c) (rest coll))
       val)))
 
-(defn reduce-2d
+(defn reduce-k2d
   "Reduces a 2d dataset (seq of seq of items)."
   [f init lines]
   (reduce-i
@@ -116,11 +124,29 @@
           (recur order' unseen'))
         order))))
 
-(defn cardinal-neighbors [x y]
+(defn cardinal-neighbors
+  "Return the (x,y) positions left, top, down, right of the given position. Same
+  as `manhattan-neighbors` with distance 1."
+  [x y]
   [[(+ x 1) y]
    [x (+ y 1)]
    [x (- y 1)]
    [(- x 1) y]])
+
+(defn rangeii
+  "Inclusive-inclusive version of `range`."
+  ([end] (range (+ end 1)))
+  ([start end] (range start (+ end 1)))
+  ([start end step] (range start (+ end 1) step)))
+
+(defn rangeii-symmetric [d]
+  (rangeii (- d) d))
+
+(defn manhattan-neighbors [x y d]
+  (for [dx (rangeii-symmetric d)
+        dy (rangeii-symmetric (- d (abs dx)))
+        :when (or (not= dx 0) (not= dy 0))]
+    [(+ x dx) (+ y dy)]))
 
 (defn- a*-reconstruct-path [predcessors goal]
   (loop [path (transient [])

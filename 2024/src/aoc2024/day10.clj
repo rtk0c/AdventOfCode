@@ -7,9 +7,8 @@
   ([] (parse-input "inputs/day10.txt"))
   ([file]
    (with-open [rdr (io/reader file)]
-     (let [lines (doall (line-seq rdr))
-           l0 (first lines)]
-       {:width (count l0)
+     (let [lines (vec (line-seq rdr))]
+       {:width (count (first lines))
         :height (count lines)
         :map (->> (str/join lines)
                   (mapv #(- (int %) (int \0)))
