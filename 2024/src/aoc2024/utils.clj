@@ -206,9 +206,16 @@
   (and (< -1 x (.width g))
        (< -1 y (.height g))))
 
-(defn grid-at [^Grid g x y]
-  (aget (:grid g)
-        (+ x (* (:width g) y))))
+(defn grid-at
+  ([^Grid g x y]
+   (aget (:grid g)
+         (+ x (* (:width g) y))))
+  ([^Grid g x y default]
+   (let [grid (:grid g)
+         i (+ x (* (:width g) y))]
+     (if (< -1 i (alength grid))
+       (aget grid i)
+       default))))
 
 (defn grid-set [^Grid g x y v]
   (aset (:grid g)
