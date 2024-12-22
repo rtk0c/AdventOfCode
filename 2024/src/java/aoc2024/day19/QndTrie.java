@@ -31,13 +31,23 @@ public class QndTrie {
     private static String[] EMPTY = new String[0];
 
     @SuppressWarnings("unchecked")
-    public QndTrie(String[] needles) {
-        ArrayList<String>[] entries = new ArrayList[5*5];
-        for (int i = 0; i < entries.length; ++i)
-            entries[i] = new ArrayList<String>();
+    private static ArrayList<String>[] builder(int len) {
+        var intm = new ArrayList[len];
+        for (int i = 0; i < len; ++i)
+            intm[i] = new ArrayList<String>();
+        return intm;
+    }
 
-        this.singles = new String[5][];
-        Arrays.fill(singles, EMPTY);
+    private static String[][] build(ArrayList<String>[] intm) {
+        var res = new String[intm.length][];
+        for (int i = 0; i < intm.length; ++i)
+            res[i] = intm[i].toArray(new String[0]);
+        return res;
+    }
+
+    public QndTrie(String[] needles) {
+        var entries = builder(5*5);
+        var singles = builder(5);
 
         for (var needle : needles) {
             if (needle.length() > 1) {
@@ -47,15 +57,12 @@ public class QndTrie {
                 for (int c1 = 0; c1 < 5; ++c1) {
                     entries[c1*5 + c0].add(needle);
                 }
-                singles[c0] = new String[] { needle };
+                singles[c0].add(needle);
             }
         }
 
-        this.entries = new String[entries.length][];
-        for (int i = 0; i < entries.length; ++i) {
-            var al = entries[i];
-            this.entries[i] = al.toArray(new String[al.size()]);
-        }
+        this.entries = build(entries);
+        this.singles = build(singles);
     }
 
     public String[] prefixes(String haystack, int baseI) {
