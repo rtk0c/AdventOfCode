@@ -56,7 +56,6 @@
             ;; a corner cannot be both convex and concave, so this is safe
             (when (or (and (not n-x-=) (not n-y-=)) ;; convex corner
                       (and (not c-=) n-x-= n-y-=))  ;; concave corner
-              (println x y "corner")
               (var-set edges (inc @edges)))))
         [@area @peri @edges]))))
 
@@ -72,8 +71,6 @@
                            x (range w)]
                        (floodfill g x y))
                      (filter some?))]
-    (doseq [[area peri edges] regions]
-      (println area peri edges))
     [(->> regions (map part1-price) (reduce +))
      (->> regions (map part2-price) (reduce +))]))
 

@@ -211,11 +211,9 @@
    (aget (:grid g)
          (+ x (* (:width g) y))))
   ([^Grid g x y default]
-   (let [grid (:grid g)
-         i (+ x (* (:width g) y))]
-     (if (< -1 i (alength grid))
-       (aget grid i)
-       default))))
+   (if (grid-in-bound? g x y)
+     (grid-at g x y)
+     default)))
 
 (defn grid-set [^Grid g x y v]
   (aset (:grid g)
