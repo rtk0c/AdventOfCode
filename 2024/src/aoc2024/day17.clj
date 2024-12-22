@@ -14,9 +14,8 @@
        {:reg-a (pi reg-a)
         :reg-b (pi reg-b)
         :reg-c (pi reg-c)
-        :prog (map #(Integer/parseInt %)
-                   (str/split (remove-prefix prog "Program: ")
-                              #","))}))))
+        :prog (->> (str/split (remove-prefix prog "Program: ") #",")
+                   (map parse-long))}))))
 
 (defn part1 [{a :reg-a b :reg-b c :reg-c prog :prog}]
   (let [pc (new Processor)]

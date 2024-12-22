@@ -21,9 +21,9 @@
   ([] (parse-input "inputs/day14.txt"))
   ([file]
    (with-open [rdr (io/reader file)]
-     (for [line (doall (line-seq rdr))
-           :let [nums (re-seq #"-?\d+" line)]]
-       (map #(Long/parseLong %) nums)))))
+     (for [line (doall (line-seq rdr))]
+       (->> (re-seq #"-?\d+" line)
+            (map parse-long))))))
 
 (defn- fly-robot [[x y vx vy] t]
   [(+ x (* vx t))
@@ -46,8 +46,7 @@
 
 (defn- print-formation
   [robots width height]
-  (let [m (char-array (* width height))]
-    (java.util.Arrays/fill m \.)
+  (let [m (char-array (* width height) \.)]
     (doseq [[x y] robots]
       (aset m (+ x (* width y)) \#))
     (doseq [i (range 0 (* height width) width)]
@@ -74,7 +73,7 @@
                        (+ 1 (aget stats q))))
                stats)
              (int-array 4))
-     (reduce * 1))))
+     (reduce *))))
 
 ;; Usage: just dump like 10000 snapshots into a file, and examine the file by hand
 (defn save-robot-formations
@@ -97,7 +96,7 @@
 ;; each other, surrounded by a frame. Located anywhere in the 101x103 grid.
 ;;
 ;; Try to detect it by looking for a lots of continuous stripes of robots.
-j; Tested on personal data, does this in fact find the christmas tree.
+;; Tested on personal data, does this in fact find the christmas tree.
 (defn- likely-christmas-tree? [robots]
   (let [x-gp (-> (group-by first robots) (update-vals #(map second %)) (vals))
         y-gp (-> (group-by second robots) (update-vals #(map first %)) (vals))

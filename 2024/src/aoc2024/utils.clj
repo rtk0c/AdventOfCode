@@ -52,7 +52,7 @@
       (recur (+ i 1) (f val i c) (rest coll))
       val)))
 
-(defn reduce-k2d
+(defn reduce-2d
   "Reduces a 2d dataset (seq of seq of items)."
   [f init lines]
   (reduce-i
@@ -84,16 +84,33 @@
     (conj! coll x)
     (transient #{x})))
 
+(defn conj-list!
+  "Same as conj! but automatically creates a new transient list with x if 'coll' is nil."
+  [coll x]
+  (if coll
+    (conj! coll x)
+    (transient [x])))
+
 (defn construct-graph
   "Construct a graph as a hashmap of vertices to hashset of edges. Take f which
-  inserts edge into the hashmap."
-  [f edges]
-  (-> (reduce f (transient {}) edges)
-      (persistent!)             ;; outer {vert -> #{edges}} map
-      (update-vals persistent!) ;; each inner #{edges}
-      ))
+  inserts edge into the hashmap. If 'f' is not provided, assume 'edges' is a seq
+  of 2-element seqs containing from-vertex and to-vertex."
+  ([f edges]
+   (-> (reduce f (transient {}) edges)
+       (persistent!)             ;; outer {vert -> #{edges}} map
+       (update-vals persistent!) ;; each inner #{edges}
+       ))
+  ([edges]
+   (construct-graph
+    (fn [g [from to]] (update! g from #(conj-set! % to)))
+    edges)))
 
-(defn valid-topo-order? [g topo]
+;; 'g' here can be either maps or functions returning seqs. As long as it's a
+;; callable that produces a seq of vertices leading from the current.
+
+(defn valid-topo-order?
+  "Check if 'topo' is a valid topological ordering for the graph 'g'."
+  [g topo]
   (let [present-verts (set topo)]
     ;; returns false on false, and the 'seen'-set on true; too lazy to coerce
     ;; to a bool (but not lazy enough to not write this comment)
@@ -106,7 +123,7 @@
             (transient #{})
             topo)))
 
-(defn topological-sort
+(defn topo-sort
   "Topologically sort a subgraph of 'g' containing only the vertices 'verts'."
   [g verts]
   (letfn [(collect [[order unseen :as state] v]
@@ -148,37 +165,61 @@
         :when (or (not= dx 0) (not= dy 0))]
     [(+ x dx) (+ y dy)]))
 
-(defn- a*-reconstruct-path [predcessors goal]
+(defn- a*-reconstruct-path [preds vgoal]
   (loop [path (transient [])
-         pos goal]
-    (if-let [prev-pos (.get predcessors pos)]
-      (recur (conj! path pos)
-             prev-pos)
-      (persistent! (conj! path pos)))))
+         v vgoal]
+    (if-let [prev-v (.get preds v)]
+      (recur (conj! path v)
+             prev-v)
+      (persistent! (conj! path v)))))
 
-(defn a* [fneigh fcost fheuristic pos0 posf]
-  (let [pq (new java.util.PriorityQueue)
+(defn a* [g fcost fheuristic v0 vf]
+  (let [frontier (new java.util.PriorityQueue)
         costs (new java.util.HashMap)
-        predcessor (new java.util.HashMap)]
-    (.offer pq [0 pos0])
-    (.put costs pos0 0)
-    (whilex (not (.isEmpty pq))
-      (let [[_ pos] (.remove pq)
-            cost (.get costs pos)]
-        (if (= pos posf)
-          (reduced (a*-reconstruct-path predcessor pos))
-          (doseq [pos' (fneigh pos)
-                  :let [cost' (+ cost (fcost pos pos'))]]
-            (when (< cost' (.getOrDefault costs pos' Integer/MAX_VALUE))
-              (.put costs pos' cost')
-              (.put predcessor pos' pos)
-              (.offer pq [(+ cost' (fheuristic pos')) pos']))))))))
+        preds (new java.util.HashMap)]
+    (.offer frontier [0 v0])
+    (.put costs v0 0)
+    (whilex (not (.isEmpty frontier))
+      (let [[_ v] (.remove frontier)
+            cost (.get costs v)]
+        (if (= v vf)
+          (reduced (a*-reconstruct-path preds v))
+          (doseq [v' (g v)
+                  :let [cost' (+ cost (fcost v v'))]]
+            (when (< cost' (.getOrDefault costs v' Integer/MAX_VALUE))
+              (.put costs v' cost')
+              (.put preds v' v)
+              (.offer frontier [(+ cost' (fheuristic v')) v']))))))))
 
 (defn print-array [arr]
   (println (seq arr)))
 
-(defn print-2d-array [a w h]
+(defn print-2d-array [arr w h]
   (doseq [y (range h)]
     (doseq [x (range w)]
-      (print (aget a (+ x (* y w))) \space))
+      (print (aget arr (+ x (* y w))) \space))
     (println)))
+
+(defrecord Grid [grid ^long width ^long height])
+
+(defn grid-in-bound? [^Grid g x y]
+  (and (< -1 x (.width g))
+       (< -1 y (.height g))))
+
+(defn grid-at [^Grid g x y]
+  (aget (:grid g)
+        (+ x (* (:width g) y))))
+
+(defn grid-set [^Grid g x y v]
+  (aset (:grid g)
+        (+ x (* (:width g) y))
+        v))
+
+(defn grid-points [^Grid g]
+  (let [grid (:grid g) w (:width g) h (:height g)]
+    (for [y (range h)
+          x (range w)]
+      [x y (aget grid (+ x (* w y)))])))
+
+(defn print-grid [^Grid g]
+  (print-2d-array (:grid g) (:width g) (:height g)))
