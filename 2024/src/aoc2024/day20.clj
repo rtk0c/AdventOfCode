@@ -66,23 +66,39 @@
           (.add stack [x' y' (+ d 1)]))))
     [dists w h]))
 
-(defn- cheats-time-saves [g df reg-time x y]
-  (for [[x' y'] (manhattan-neighbors x y 2)
-        :when (and (grid-in-bound? g x' y')
-                   (not= (grid-at g x' y') \#))]
-    (- reg-time
-       (+ (grid-at df x y)
-          (- reg-time (grid-at df x' y'))
-          (abs (- x x'))
-          (abs (- y y'))))))
+(defn- cheats-time-saves [g df reg-time cheat-length x y]
+  (->> (manhattan-neighbors x y cheat-length)
+       (filter (fn [[x' y']]
+                 (and (grid-in-bound? g x' y')
+                      (not= (grid-at g x' y') \#)
+                      (>= (- reg-time
+                             (+ (grid-at df x y)
+                                (- reg-time (grid-at df x' y'))
+                                (abs (- x x'))
+                                (abs (- y y'))))
+                          100))))
+       (count)))
 
-(defn part1 [{[_ w h :as g] :map [x0 y0] :start [xf yf] :end}]
+(defn count-useful-cheats [{[_ w h :as g] :map [x0 y0] :start [xf yf] :end} cheat-length]
   (let [df (floodfill g x0 y0)
         reg-time (grid-at df xf yf)]
     (->> (for [y (range h)
                x (range w)
                :when (not= (grid-at g x y) \#)]
-           (cheats-time-saves g df reg-time x y))
-         (flatten)
-         (filter #(>= % 100))
-         (count))))
+           (cheats-time-saves g df reg-time cheat-length x y))
+         (reduce +))))
+
+(defn part1 [input]
+  (count-useful-cheats input 2))
+
+;; This takes a while... about 1 minute on my machine. It should only be
+;; O(whn^2) where w/h are the size of the grid, and n being 20 here. I suspect
+;; the slowdown comes from lack of proper annotation causing lots of reflection
+;; for type checking needs to happen
+(defn part2 [input]
+  (count-useful-cheats input 20))
+
+(defn solve []
+  (let [input (parse-input)]
+    [(part1 input)
+     (part2 input)]))
