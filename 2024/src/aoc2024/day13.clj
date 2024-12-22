@@ -46,11 +46,15 @@
           (+ (* x 3) y)
           nil)))))
 
-(defn part1 [input]
+(defn all-tokens [input]
   (->> input
        (map tokens)
        (filter some?)
        (reduce +)))
 
 (defn solve []
-  (let [input (parse-input)]))
+  (let [input (parse-input)]
+    [(all-tokens input)
+     (all-tokens (map (fn [[ax ay bx by px py]]
+                        [ax ay bx by (+ 10000000000000 px) (+ 10000000000000 py)])
+                      input))]))
