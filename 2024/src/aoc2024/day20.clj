@@ -51,12 +51,6 @@
 (defn grid-set [[grid w h] x y v]
   (aset grid (+ x (* w y)) v))
 
-(defn grid-map [[grid w h] f]
-  (let [grid' (amap grid idx ret
-                    (let [v (aget grid idx)]
-                      (f v)))]
-    [grid' w h]))
-
 (defn floodfill [[grid w h] x0 y0]
   (let [dists (int-array (count grid) -1)
         stack (new java.util.ArrayDeque)
@@ -72,24 +66,23 @@
           (.add stack [x' y' (+ d 1)]))))
     [dists w h]))
 
-(defn- cheats-time-saves [g reg-time df-s df-e x y]
+(defn- cheats-time-saves [g df reg-time x y]
   (for [[x' y'] (manhattan-neighbors x y 2)
         :when (and (grid-in-bound? g x' y')
                    (not= (grid-at g x' y') \#))]
     (- reg-time
-       (+ (grid-at df-s x y)
-          (grid-at df-e x' y')
+       (+ (grid-at df x y)
+          (- reg-time (grid-at df x' y'))
           (abs (- x x'))
           (abs (- y y'))))))
 
 (defn part1 [{[_ w h :as g] :map [x0 y0] :start [xf yf] :end}]
-  (let [df-s (floodfill g x0 y0)
-        reg-time (grid-at df-s xf yf)
-        df-e (grid-map df-s #(if (< % 0) % (- reg-time %)))]
+  (let [df (floodfill g x0 y0)
+        reg-time (grid-at df xf yf)]
     (->> (for [y (range h)
                x (range w)
                :when (not= (grid-at g x y) \#)]
-           (cheats-time-saves g reg-time df-s df-e x y))
+           (cheats-time-saves g df reg-time x y))
          (flatten)
          (filter #(>= % 100))
          (count))))
